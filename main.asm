@@ -1,6 +1,5 @@
 ;; DEFs
 .include "defs/core.def"
-.include "defs/stack.def"
 .include "defs/mmc1.def"
 .include "defs/nes.def"
 
@@ -8,11 +7,14 @@
 .include "data/header.asm"
 
 .segment "ZEROPAGE" ; premium real estate for global variables
-.include "data/zp_core.asm"
-.include "data/zp.asm"
+.include "mem/core.zp.asm"
+.include "mem/nes.zp.asm"
 
-.segment "BSS" ; Rest of RAM, $0200-$07FF. First 255 bytes are sprite DMA. Rest are free to use
-.include "data/bss.asm"
+.segment "BSS" ; Rest of RAM, $0200-$07FF.
+.include "mem/stack.bss.asm" ;; First 255 bytes are sw stack
+.include "mem/nes.bss.asm" ;; Next 255 bytes are sprite DMA
+
+;; $0400-$07FF are free
 frame_counter:  .res 1 ;; Updated every NMI
 current_frame:  .res 1 ;; Compared with frame counter
 

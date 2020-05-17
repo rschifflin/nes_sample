@@ -19,12 +19,13 @@ TEST_RESERVED            = $7FFE ;; Dunno what to do with this yet
 TEST_SHOW                = $7FFF
 
 .include "../defs/core.def"
-.include "../defs/stack.def"
 
 .segment "ZEROPAGE"
-.include "../data/zp_core.asm"
+.include "../mem/core.zp.asm"
 
 .segment "BSS"
+.include "../mem/stack.bss.asm"
+
 .segment "IVT"
   .addr 0       ;; Non-maskable interrupt
   .addr RESET   ;; Processor turns on or reset button is pressed
