@@ -1,0 +1,3 @@
+;; Work RAM areas
+SW_STACK = $0700
+
