@@ -46,10 +46,10 @@
 ;; the mirrored attribute table, causing a wrap effect.
 .proc WritePPUAttrColumn
     ;; Arguments
-    ppuTargetLo  = SW_STACK-3
-    ppuTargetHi  = SW_STACK-2
-    scrollX      = SW_STACK-1
-    scrollY      = SW_STACK-0
+    ppuTargetLo  = SW_STACK-4
+    ppuTargetHi  = SW_STACK-3
+    scrollX      = SW_STACK-2
+    scrollY      = SW_STACK-1
     bufferLen    = r0
     srcLo        = PLO
     srcHi        = PHI
@@ -97,10 +97,10 @@
     ;; Expects P=src, r0=buffer_len, r1=column_len
     .proc Write
         ;; Arguments
-        ppuTargetLo           = SW_STACK-3
-        ppuTargetHi           = SW_STACK-2
-        ppuTargetLoWithOffset = SW_STACK-1
-        ppuTargetHiWithOffset = SW_STACK-0
+        ppuTargetLo           = SW_STACK-4
+        ppuTargetHi           = SW_STACK-3
+        ppuTargetLoWithOffset = SW_STACK-2
+        ppuTargetHiWithOffset = SW_STACK-1
         bufferLen             = r0
         columnLen             = r1
         srcLo                 = PLO
@@ -232,7 +232,7 @@
 ;; Arg0: LenLo
 ;; Arg1: LenHi
 .proc WritePpuBytes
-    len = SW_STACK-1
+    len = SW_STACK-2
     LDX SP
   loop_hi:
     LDA len+1,X
