@@ -21,6 +21,7 @@ TEST_SHOW                = $7FFF
 .include "../defs/core.def"
 
 .segment "ZEROPAGE"
+ZEROBYTE: .res 1 ;; Bug in soft65c02 maybe? Cant INC byte so we start our zp at 1
 .include "../mem/core.zp.asm"
 
 .segment "BSS"
@@ -55,6 +56,7 @@ clear_stack:
   LDA TEST_COUNT_TOTAL_HI
   ADC #$00
   STA TEST_COUNT_TOTAL_HI
+  JSR TestClearRAM
   JSR TestClearExpectedValue
   JSR TestClearActualValue
   JSR subroutine
@@ -121,6 +123,18 @@ strings:
     LDA #>TEST_ACTUAL
     STA PHI
     JMP TestClearLoop ;; tail call
+.endproc
+.proc TestClearRAM
+    LDA #<PHI+1
+    STA PLO
+    LDA #<PHI+2
+    STA PHI
+    JSR TestClearLoop ;; tail call
+    LDA #$00
+    STA SP
+    STA PLO
+    STA PHI
+    RTS
 .endproc
 
 run:

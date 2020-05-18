@@ -1,5 +1,4 @@
 ;; Harness includes core by default
-
 .include "harness.asm"
 
 integers:
