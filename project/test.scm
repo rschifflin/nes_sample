@@ -1,8 +1,9 @@
-#!/usr/bin/guile -s
+#!/usr/local/bin/guile -s
 !#
 (use-modules (ice-9 popen)
              (ice-9 rdelim)
              (ice-9 ftw)
+             (ice-9 sandbox)
              (srfi srfi-1)
              (srfi srfi-9)
              (srfi srfi-13))
@@ -56,6 +57,12 @@
               (asm-test-builder exprs ... body name-arg description-arg rows-arg)))))
        (asm-test-builder asm-defs .. body #f #f 1)))))
 
+(define (asm-test-sandbox)
+  (export asm-test)
+  (let* ((symbols '(asm-test))
+         (bindings (cons (module-name (current-module)) symbols)))
+    (make-sandbox-module (cons bindings all-pure-bindings))))
+
 (define (call-with-output-pipe cmd out-pred)
   (let* ((pipe (open-input-output-pipe cmd))
          (read_result (out-pred pipe))
@@ -83,7 +90,7 @@
     (let ((result (read port)))
       (if (eof-object? result)
         (reverse test-list)
-        (let ((parsed (eval result (current-module))))
+        (let ((parsed (eval-in-sandbox result #:module (asm-test-sandbox))))
            (if (is-asm-test? parsed)
              (continue port (cons parsed test-list))
              #f)))))
