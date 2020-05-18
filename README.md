@@ -29,12 +29,20 @@ Used to link test.asm files, specifies the correct memory layout for soft6502
 
 The test harness. Individual test files `include` the harness and use its provided SHOW macros to export test data.
 
-`test/core.test`
+`test/core.scm`
 
-A test description file for the `core` library. Defines a list of tests.
+A test description file for the `core` library.
 Can be run with `./test.scm core`
-Each test is defined by having 3 paragraphs. The first starts with the line NAME, the second DESCRIPTION, the third ROWS.
-Name and Description are pretty strings for the test runner to display, whereas ROWS defines the # of 16-byte rows
+Each test is defined in scheme with a descriptive syntax, of the form
+```
+  (asm-test
+    (name "your test name")
+    (description
+      "your test description"
+      "multiple strings are ok")
+    (rows n) ;; Optional, defaults to 1
+```
+name and description are pretty strings for the test runner to display, whereas rows defines the # of 16-byte rows
 of memory to compare actual test results in memory to expected test results in memory inside the simulator.
 
 `test/core_test.asm`
