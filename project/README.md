@@ -5,84 +5,86 @@ This repo serves as an example of a base repo for starting an NES project.
 Files are stored in the following heirarchy. At the project root, there is main.asm.
 
 ### Root
-`./main.asm`
+`main.asm`
 
 This is the primary assembly file to assemble and link to create your .NES binary.
 
-`./ines.cfg`
+`ines.cfg`
 
 The linker configuration file for .NES files.
 
-`./test.scm`
+`test.scm`
 
-A test-runner script in guile scheme. Usage is `./test.scm name`, where name is a filename prefix in `./test/`.
-It loads the test description, compiles and assembles the test asm, generates `./test.run` output,
+A test-runner script in guile scheme. Usage is `test.scm name`, where name is a filename prefix in `test/`.
+If no name is given, all tests will be run.
+It loads the test description, generates `out/test/test.run` output,
 feeds it into `soft6502`, parses the output as test results, and shows passes and failures.
 
-`./test.run`
-
-Generated from test.scm. Can be used with soft6502 to manually explore the 6502 simulator and debug.
-
-`./test.cfg`
+`test.cfg`
 
 Used to link test.asm files, specifies the correct memory layout for soft6502
 
 ### Test
-`./test/harness.asm`
+`test/harness.asm`
 
 The test harness. Individual test files `include` the harness and use its provided SHOW macros to export test data.
 
-`./core.test`
+`core.test`
 
 A test description file for the `core` library. Defines a list of tests.
 Each test is defined by having 3 paragraphs. The first starts with the line NAME, the second DESCRIPTION, the third ROWS.
 Name and Description are pretty strings for the test runner to display, whereas ROWS defines the # of 16-byte rows
 of memory to compare actual test results in memory to expected test results in memory inside the simulator.
 
-`./core_test.asm`
+`core_test.asm`
 
 A test file. Includes the test harness, and defines the procedure `RunTests`.
 Test results are exported when calling the SHOW macro. SHOW will compare the data
 in TEST_EXPECTED with the data in TEST_ACTUAL, for as many rows as specified in the test description file.
 
 ### Out
-`./out/main.dbg`
+`out/main.dbg`
 
 Additional debug file generated during assembly and linking, for emulators like Mesen to give more detailed debugging.
 
-`./out/main.o`
+`out/main.o`
 
-The object file created from assembling `./main.asm`
+The object file created from assembling `main.asm`
 
-`./out/main.nes`
+`out/main.nes`
 
-The .NES binary file created from linking `./out/main.o`
+The .NES binary file created from linking `out/main.o`
 
-`./out/test.o`
+### Out/Test
 
-The object file created from assembling a test file using `./test.scm name`
+`out/test/<name>.o`
 
-`./out/test.bin`
+The object file created from assembling a test file located at `test/<name>_test.asm`
 
-The soft6502 binary file created from linking `./out/test.o`
+`out/test/<name>.bin`
+
+The soft6502 binary file created from linking `out/test/<name>.o`
+
+`out/test/test.run`
+
+Generated from test.scm. Can be used with soft6502 to manually explore the 6502 simulator and debug.
 
 ### Lib
-The directory for all library asm files. Libraries can expect to have access to the symbols in `core.asm` and `stack.asm`,
-as well as the memory addresses in `./data/zp.asm` and `./data/bss.asm`
+The directory for all library asm files. Libraries can expect to have access to the symbols in `core.asm` and `stack.asm`.
 
-`./lib/core.asm`
+`lib/core.asm`
 
 Core 6502 functions, with no other library dependencies or hardware-specific dependencies.
 
-`./lib/stack.asm`
+`lib/stack.asm`
 
-A software stack defined at `0x0700` with a zeropage stack pointer SP.
+A software stack with a zeropage stack pointer SP.
 
-`./lib/nes.asm`
+`lib/nes.asm`
 
 General-purpose NES library
 
-`./lib/mmc1.asm`
+`lib/mmc1.asm`
 
 Library for using the memory mapper MMC1
 
@@ -90,79 +92,83 @@ Library for using the memory mapper MMC1
 The directory for all assembler-level definitions. No code or data, so can be freely included without changing the resulting binary
 
 ```
-  ./defs/core.def
-  ./defs/mmc1.def
-  ./defs/nes.def
+  defs/core.def
+  defs/mmc1.def
+  defs/nes.def
 ```
 
-Definitions for the corresponding libraries in `./lib/`
+Definitions for the corresponding libraries in `lib/`
 
 ### Data
 The directory for data. Used to store name tables, attr tables, palettes, sprites, strings, music, etc. Also includes the .NES header bytes and the memory layout of the zeropage and bss areas.
 
-`./data/header.asm`
+`data/header.asm`
 Holds the byte layout of the .iNES header. Should be the first bytes of any NES rom binary.
 
 ```
-  ./data/attr_table.asm
-  ./data/name_table.asm
-  ./data/integers.asm
-  ./data/palette.asm
-  ./data/sprites.asm
-  ./data/strings.asm
+  data/attr_table.asm
+  data/name_table.asm
+  data/integers.asm
+  data/palette.asm
+  data/sprites.asm
+  data/strings.asm
 ```
 Hold some reasonable default data
 
 ### Mem
 The directory for reserved areas of memory. Libraries that depend on certain addresses in zeropage or general RAM reserve them here.
 
-`./mem/core.zp.asm`
+`mem/core.zp.asm`
 
 Holds the essential zero page variables. These are relied upon by `core`. Note this includes a 1-byte stack pointer, as core
 declares all zeropage variables it protects from push/pop.
 
-`./mem/nes.zp.asm`
+`mem/nes.zp.asm`
 
 NES-specific zero page variables.
 
-`./mem/stack.bss.asm`
+`mem/stack.bss.asm`
 
 Reserves a 0-aligned page of memory for the software stack
 
-`./mem/nes.bss.asm`
+`mem/nes.bss.asm`
 
 Reserves nes-specific memory addresses
 
 ### Assets
 For all third-party assets
 
-`./assets/mario.chr `
+`assets/mario.chr `
 A CHR bank from Super Mario.
 
 ## Compiling
+Main can be compiled with `make` or `make main`
+Tests can be compiled with `make test`
+
+Or for main:
 ```
 To assemble:
-  ca65 -t nes "./main.asm" -g -o "./out/main.o"
+  ca65 -t nes "main.asm" -g -o "out/main.o"
 To link:
-  ld65 -C "./ines.cfg" -o "./out/main.nes" --dbgfile "./out/main.dbg" "./out/main.o"
+  ld65 -C "ines.cfg" -o "out/main.nes" --dbgfile "out/main.dbg" "out/main.o"
+```
+
+And test:
+```
+To assemble manually:
+  ca65 -t nes "test/name_test.asm" -g -o "out/test/name.o"
+To link manually:
+  ld65 -C "test.cfg" -o "out/test/name.bin" "out/test/name.o"
 ```
 
 ## Testing
+With tests compiled, run
 ```
   ./test.scm <name>
-```
-
-or also:
-
-```
-To assemble manually:
-  ca65 -t nes "./test/name_test.asm" -g -o "./out/test.o"
-To link manually:
-  ld65 -C "./test.cfg" -o "./out/test.bin" "./out/test.o"
 ```
 
 ## Running
 The bare project should compile as is and load in an emulator showing a simple test pattern screen
 
 ## Dependencies
-Depends on a bunch of software: ca65, ld65, soft6502, guile, rg
+Depends on a bunch of software: ca65, ld65, soft65c02, guile, make, even rg because I'm lazy

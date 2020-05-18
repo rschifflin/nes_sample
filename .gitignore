@@ -1,0 +1,5 @@
+project/out/*
+project/out/test/*
+
+!project/out/.gitkeep
+!project/out/test/.gitkeep

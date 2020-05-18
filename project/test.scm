@@ -2,6 +2,8 @@
 !#
 (use-modules (ice-9 popen)
              (ice-9 rdelim)
+             (ice-9 ftw)
+             (srfi srfi-1)
              (srfi srfi-9)
              (srfi srfi-13))
 
@@ -45,7 +47,7 @@
           (read-nonempty-line port)
           pretty-line)))))
 
-(define (generate-soft65c02-input test-list)
+(define (generate-soft65c02-input test-list test-name)
   (define (continue test-list generated)
     (if (null? test-list)
       generated
@@ -58,7 +60,7 @@
                                    "run until #0x7FFF = 0x01\n")))))
   (continue test-list
             (string-append
-              "memory load #0x8000 \"out/test.bin\"\n"
+              "memory load #0x8000 \"out/test/" test-name ".bin\"\n"
               "run init until #0x7FFF = 0x01\n")))
 
 (define (parse-test-name port)
@@ -141,10 +143,11 @@
                 (else
                   (begin
                     (display (string-append
-                               "    FAIL\n      " (test-name (list-ref test-list test-number)) "\n"
-                               "      Description: " (test-desc (list-ref test-list test-number)) "\n"
-                               "      expected:\n        " expected-full "\n"
-                               "      actual:\n        "   actual-full "\n"))
+                               "  FAIL\n"
+                               "    " (test-name (list-ref test-list test-number)) "\n"
+                               "      " (test-desc (list-ref test-list test-number)) "\n"
+                               "    expected:\n        " expected-full "\n"
+                               "    actual:\n        "   actual-full "\n"))
                     #f)))))
           (#t (begin
                 (display (string-append
@@ -153,30 +156,35 @@
                   #f))))))
   (continue port test-list 0 '()))
 
-(let* ((name (cadr (command-line)))
-       (file_test (string-append "test/" name ".test"))
-       (file_asm  (string-append "test/" name "_test.asm"))
-       (file_out  "out/test.o"))
+(define (lookup-test-names)
+  (map (lambda (name) (basename name ".bin"))
+       (scandir "out/test"
+                (lambda (name) (string-suffix? ".bin" name)))))
+
+(let* ((args (cdr (command-line)))
+       (test-names (if (zero? (length args))
+                    (lookup-test-names)
+                    args)))
   (and
-    (eq? (status:exit-val (system* "ca65" "-t" "nes" file_asm "-g" "-o" file_out))
-         EXIT_SUCCESS)
-    (begin
-      (display "  TEST: assembler ok!\n")
-      (eq? (status:exit-val (system* "ld65" "-C" "test.cfg" "-o" "out/test.bin" "out/test.o"))
-           EXIT_SUCCESS))
-    (begin
-      (display "  TEST: linker ok!\n")
-      #t)
-    (let* ((test-list (call-with-input-file file_test parse-test-file-in))
-           (generated (generate-soft65c02-input test-list))
-           (write-test-input (lambda (port) (display generated port)))
-           (read-test-output (lambda (port)
-                               (parse-test-file-out port test-list))))
-      (and
-        (call-with-output-file "test.run"
-                               write-test-input)
-        (call-with-output-pipe (string-append "cat \"test.run\" | soft65c02 -s | rg \"Registers|#5|#6\"")
-                               read-test-output)))
+    (fold (lambda (test-name last)
+            (and
+              last
+              (begin (display (string-append "  TEST: " test-name "\n")) #t)
+              (let* ((test-file (string-append "test/" test-name ".test"))
+                     (test-list (call-with-input-file test-file parse-test-file-in))
+                     (generated (generate-soft65c02-input test-list test-name))
+                     (write-test-input (lambda (port) (display generated port)))
+                     (read-test-output (lambda (port) (parse-test-file-out port test-list))))
+                    (and
+                      (call-with-output-file "out/test/test.run" write-test-input)
+                      (call-with-output-pipe (string-append "cat \"out/test/test.run\" |"
+                                                            "soft65c02 -s |"
+                                                            "rg \"Registers|#5|#6\"")
+                                             read-test-output)))))
+          #t
+          test-names)
     (begin
       (display "  TEST: all tests pass!\n")
       #t)))
+
+
